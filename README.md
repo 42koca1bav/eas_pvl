@@ -24,7 +24,7 @@ Dafür wurden folgende die Gebäudemodellsätze mit LoD2 heruntergeladen, welche
 
 Für den Pfad der Zacke liegt ein OSM Datensatz unter der Referenznummer 935322 vor.
 
-Bevor der fertige Code in ein Vite-Project geladen wird, wird zum einfacheren Testen zunächst mit dem Cesium Sandcastle Editor gearbeitet. Der aktuelle Code kann in 'ZackeVisualizer.js' eingesehen und so in Sandcastle ausgeführt werden.
+Bevor der fertige Code in ein Vite-Project geladen wird, wird zum einfacheren Testen zunächst mit dem Cesium Sandcastle Editor gearbeitet. Der aktuelle Code kann in [ZackeVisualizer.js](https://gitlab.rz.hft-stuttgart.de/42koca1bav/eas_pvl_koehler/-/blob/7a4cd49b8db82a75595a2ab7bd67eee9850a1957/ZackeVisualizer.js) eingesehen und so in Sandcastle ausgeführt werden.
 
 
 ## 2 - Laden der Daten
