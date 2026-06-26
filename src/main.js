@@ -174,7 +174,7 @@ viewer.timeline.zoomTo(start, finalStop);
 // add a train which position and orientation is dependent from the previously defined animation
 const trainEntity = viewer.entities.add({
     availability: new TimeIntervalCollection([
-        new TimeInterval({ start: start, stop: stop })
+        new TimeInterval({ start: start, stop: finalStop })
     ]),
     position: positionProperty,
     orientation: new VelocityOrientationProperty(positionProperty),
