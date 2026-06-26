@@ -1,0 +1,19 @@
+{
+  "name": "my-app2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "share": "powershell -NoProfile -Command \"Compress-Archive -Path src,index.html,package.json,package-lock.json,vite.config.js -DestinationPath cesium-app-example.zip -Force\""
+  },
+  "devDependencies": {
+    "vite": "^8.0.14"
+  },
+  "dependencies": {
+    "cesium": "^1.141.0",
+    "vite-plugin-static-copy": "^4.1.0"
+  }
+}

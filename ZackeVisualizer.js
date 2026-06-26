@@ -1,6 +1,3 @@
-/*
- * Code für die Ausführung in CesiumJS Sandcastle online Editor:
- */
 
 // Zugriff auf Cesium Ion assets
 Cesium.Ion.defaultAccessToken =
@@ -159,7 +156,14 @@ try {
         }
     });
 
-    await viewer.zoomTo(trainEntity);
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(9.168252, 48.764144, 400.0),
+      orientation: {
+        heading: Cesium.Math.toRadians(170.0),
+        pitch: Cesium.Math.toRadians(-10.0),
+        roll: 0.0,
+      },
+    });
 
 } catch (error) {
     console.log(error);
