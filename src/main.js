@@ -112,7 +112,7 @@ chainedGeometry.forEach(node => {
     pathPositions.push(Cartesian3.fromDegrees(node.lon, node.lat));
 });
 
-// Draw the main, continuous track
+// draw the main, continuous track
 zackeDataSource.entities.add({
     polyline: {
         positions: pathPositions,
@@ -124,6 +124,7 @@ zackeDataSource.entities.add({
 });
 
 // -- Animation setup --
+// setup for animation
 const start = JulianDate.fromDate(new Date(2026, 5, 18, 12, 0, 0));
 let time = start;
 const positionProperty = new SampledPositionProperty();
@@ -144,14 +145,15 @@ for (let i = 0; i < pathPositions.length; i++) {
 
 const stop = time;
 
+// convert path data into an animation
 viewer.clock.startTime = start.clone();
 viewer.clock.stopTime = stop.clone();
 viewer.clock.currentTime = start.clone();
-// CLAMPED prevents the train from instantly teleporting back to the start
-viewer.clock.clockRange = ClockRange.CLAMPED;
+viewer.clock.clockRange = ClockRange.CLAMPED; // prevents the train from instantly teleporting back to the start
 viewer.clock.multiplier = 3;
 viewer.timeline.zoomTo(start, stop);
 
+// add a train which position and orientation is dependent from the previously defined animation
 const trainEntity = viewer.entities.add({
     availability: new TimeIntervalCollection([
         new TimeInterval({ start: start, stop: stop })
@@ -166,7 +168,7 @@ const trainEntity = viewer.entities.add({
 });
 
 
-// move Camera to posistion above Marienplatz
+// move camera to posistion above Marienplatz and looking up the hill
 viewer.camera.flyTo({
     destination: Cartesian3.fromDegrees(9.168252, 48.764144, 400.0),
     orientation: {
