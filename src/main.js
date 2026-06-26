@@ -185,52 +185,6 @@ const trainEntity = viewer.entities.add({
     }
 });
 
-// -- same for a second train but inverted --
-// Create second train (opposite direction)
-const positionProperty2 = new SampledPositionProperty();
-let time2 = start;
-
-// Start at the top
-positionProperty2.addSample(time2, pathPositions[pathPositions.length - 1]);
-
-// Go down (reverse path)
-for (let i = pathPositions.length - 2; i >= 0; i--) {
-    const currentPosition = pathPositions[i];
-    const nextPosition = pathPositions[i + 1];
-    const distance = Cartesian3.distance(currentPosition, nextPosition);
-    const secondsToTravel = distance / speed;
-    time2 = JulianDate.addSeconds(time2, secondsToTravel, new JulianDate());
-    positionProperty2.addSample(time2, currentPosition);
-}
-
-// Pause at the bottom for 5 seconds
-const pauseEnd2 = JulianDate.addSeconds(time2, 5.0, new JulianDate());
-positionProperty2.addSample(pathPositions[0], pauseEnd2);
-time2 = pauseEnd2.clone();
-
-// Go up (forward path)
-for (let i = 1; i < pathPositions.length; i++) {
-    const currentPosition = pathPositions[i];
-    const prevPosition = pathPositions[i - 1];
-    const distance = Cartesian3.distance(prevPosition, currentPosition);
-    const secondsToTravel = distance / speed;
-    time2 = JulianDate.addSeconds(time2, secondsToTravel, new JulianDate());
-    positionProperty2.addSample(time2, currentPosition);
-}
-
-const train2Entity = viewer.entities.add({
-    availability: new TimeIntervalCollection([
-        new TimeInterval({ start: start, stop: finalStop })
-    ]),
-    position: positionProperty2,
-    orientation: new VelocityOrientationProperty(positionProperty2),
-    box: {
-        dimensions: new Cartesian3(14.0, 2.6, 3.5),
-        material: Color.GOLD,
-        heightReference: HeightReference.CLAMP_TO_GROUND
-    }
-});
-
 // move camera to posistion above Marienplatz and looking up the hill
 viewer.camera.flyTo({
     destination: Cartesian3.fromDegrees(9.168252, 48.764144, 400.0),
