@@ -9,7 +9,7 @@ const cesiumBaseUrl = "cesiumStatic";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: './',
+  base: '/eas_pvl/',
   appType: 'mpa',
   define: {
     // Define relative base path in cesium for loading assets
