@@ -130,6 +130,7 @@ let time = start;
 const positionProperty = new SampledPositionProperty();
 const speed = 5.0; // m/s
 
+// Forward path
 for (let i = 0; i < pathPositions.length; i++) {
     const currentPosition = pathPositions[i];
 
@@ -143,15 +144,32 @@ for (let i = 0; i < pathPositions.length; i++) {
     positionProperty.addSample(time, currentPosition);
 }
 
-const stop = time;
+// Pause at the top for 5 seconds
+const topPosition = pathPositions[pathPositions.length - 1];
+const pauseEnd = JulianDate.addSeconds(time, 5.0, new JulianDate());
+positionProperty.addSample(pauseEnd, topPosition);
+time = pauseEnd.clone();
+
+// Reverse path (going back down)
+for (let i = pathPositions.length - 2; i >= 0; i--) {
+    const currentPosition = pathPositions[i];
+    const nextPosition = pathPositions[i + 1];
+    const distance = Cartesian3.distance(currentPosition, nextPosition);
+    const secondsToTravel = distance / speed;
+    time = JulianDate.addSeconds(time, secondsToTravel, new JulianDate());
+    positionProperty.addSample(time, currentPosition);
+}
+
+const finalStop = time;
 
 // convert path data into an animation
 viewer.clock.startTime = start.clone();
-viewer.clock.stopTime = stop.clone();
+viewer.clock.stopTime = finalStop.clone();
 viewer.clock.currentTime = start.clone();
-viewer.clock.clockRange = ClockRange.CLAMPED; // prevents the train from instantly teleporting back to the start
+viewer.clock.clockRange = ClockRange.CLAMPED;
 viewer.clock.multiplier = 3;
-viewer.timeline.zoomTo(start, stop);
+viewer.timeline.zoomTo(start, finalStop);
+
 
 // add a train which position and orientation is dependent from the previously defined animation
 const trainEntity = viewer.entities.add({
