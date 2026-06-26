@@ -3,12 +3,17 @@ _Entwicklung einer Cesium-basierten 3D-Webkarten-Anwendung
 mit Vite als Prüfungsvorleistung im Modul Datenbeschaffung und -visualisierung_
 
 
-## 0 - Inhaltsverzeichnis
+![Screenshot](https://github.com/42koca1bav/eas_pvl/blob/main/Screenshot%202026-06-26%20212208.png)
+
+-----
+
+__Inhaltsverzeichnis__
 <!-- TOC -->
-- [0 - Inhaltsverzeichnis](#0---inhaltsverzeichnis)
-- [1 - Wahl des Themas und der verwendeten Daten](#1---wahl-des-themas-und-der-verwendeten-daten)
-- [2 - Laden der Daten](#2---laden-der-daten)
-- [3 - Überarbeiten der Pfad](#3---überarbeiten-der-pfad)
+[1 - Wahl des Themas und der verwendeten Daten](#1---wahl-des-themas-und-der-verwendeten-daten)  
+[2 - Laden der Daten](#2---laden-der-daten)  
+[3 - Überarbeiten und Anzeigen der Pfaddaten](#3---überarbeiten-und-anzeigen-der-pfaddaten)  
+[4 - Animation der Zacke](#4---animation-der-zacke)  
+[5 - Kamera auf die richtige Position setzen](#5---kamera-auf-die-richtige-position-setzen)  
 <!-- /TOC -->
 
 -----
@@ -17,14 +22,14 @@ mit Vite als Prüfungsvorleistung im Modul Datenbeschaffung und -visualisierung_
 
 Nach Sichtung der auf https://opengeodata.lgl-bw.de/#/ verfügbaren Datensätze wurde sich entschieden, eine Echtzeit-Visualisierung des Fahrtverlaufs für die Zacke in Stuttgart zu erstellen. Da immer maximal zwei Züge der Zahnradbahn gleichzeitig die Strecke vom Marienplatz zum Bahnhof in Degerloch fahren und die Fahrt nur wenige Minuten dauert, wurde dies als kleines, anschauliches Projekt gewählt.
 
-Dafür wurden folgende die Gebäudemodellsätze mit LoD2 heruntergeladen, welchen den da  Streckenverlauf der Zacke abdecken: 
+Dafür wurden folgende die Gebäudemodellsätze mit LoD2 heruntergeladen, welchen um den Streckenverlauf der Zacke liegen: 
 - LoD2_32_512_5399_1_BW.gml
 - LoD2_32_512_5400_1_BW.gml
 - LoD2_32_512_5401_1_BW.gml  
 
 Für den Pfad der Zacke liegt ein OSM Datensatz unter der Referenznummer 935322 vor.
 
-Bevor der fertige Code in ein Vite-Project geladen wird, wird zum einfacheren Testen zunächst mit dem Cesium Sandcastle Editor gearbeitet. Der aktuelle Code kann in [ZackeVisualizer.js](https://gitlab.rz.hft-stuttgart.de/42koca1bav/eas_pvl_koehler/-/blob/7a4cd49b8db82a75595a2ab7bd67eee9850a1957/ZackeVisualizer.js) eingesehen und so in Sandcastle ausgeführt werden.
+Bevor der fertige Code in ein Vite-Project geladen wird, wird zum einfacheren Testen zunächst mit dem Cesium Sandcastle Editor gearbeitet. Dort wurde auch bestimmt welche initiale Kamerapostion gut aussehen würde.
 
 
 ## 2 - Laden der Daten
@@ -139,7 +144,7 @@ chainedGeometry.forEach(node => {
     pathPositions.push(Cesium.Cartesian3.fromDegrees(node.lon, node.lat));
 });
 
-// zeichne den Pfad
+// zeichne den Pfad als orange Linie den Berg hinauf
 zackeDataSource.entities.add({
     polyline: {
         positions: pathPositions,
@@ -148,5 +153,83 @@ zackeDataSource.entities.add({
         classificationType: Cesium.ClassificationType.BOTH,
         material: new Cesium.Color(200 / 255, 100 / 255, 50 / 255, 1.0)
     }
+});
+```
+
+## 4 - Animation der Zacke
+Für die Visualisierung wird aus den Pfaddaten eine Animation generiert
+
+```js
+// Setup für die Animation
+const start = JulianDate.fromDate(new Date(2026, 5, 18, 12, 0, 0));
+let time = start;
+const positionProperty = new SampledPositionProperty();
+const speed = 5.0; // m/s
+
+// Extrahiere für jede Pfadposition eine Animationspostion in Abhägigkeit von der Zeit und der gewählten Geschwindigkeit. Zunächst für die Fahrt bergauf.
+for (let i = 0; i < pathPositions.length; i++) {
+    const currentPosition = pathPositions[i];
+
+    if (i > 0) {
+        const prevPosition = pathPositions[i - 1];
+        const distance = Cartesian3.distance(prevPosition, currentPosition);
+        const secondsToTravel = distance / speed;
+        time = JulianDate.addSeconds(time, secondsToTravel, new JulianDate());
+    }
+
+    positionProperty.addSample(time, currentPosition);
+}
+
+// 5 sekunden pause oben
+const topPosition = pathPositions[pathPositions.length - 1];
+const pauseEnd = JulianDate.addSeconds(time, 5.0, new JulianDate());
+positionProperty.addSample(pauseEnd, topPosition);
+time = pauseEnd.clone();
+
+// Pfad bergab
+for (let i = pathPositions.length - 2; i >= 0; i--) {
+    const currentPosition = pathPositions[i];
+    const nextPosition = pathPositions[i + 1];
+    const distance = Cartesian3.distance(currentPosition, nextPosition);
+    const secondsToTravel = distance / speed;
+    time = JulianDate.addSeconds(time, secondsToTravel, new JulianDate());
+    positionProperty.addSample(time, currentPosition);
+}
+
+const finalStop = time;
+
+// Set up der Animation  im Viewer
+viewer.clock.startTime = start.clone();
+viewer.clock.stopTime = stop.clone();
+viewer.clock.currentTime = start.clone();
+viewer.clock.clockRange = ClockRange.CLAMPED; // prevents the train from instantly teleporting back to the start
+viewer.clock.multiplier = 3;
+viewer.timeline.zoomTo(start, finalStop);
+
+// Füge einen Zug als goldene Box hinzu, dessen Position und Orientierung aus der Animation abgeleitet sind
+const trainEntity = viewer.entities.add({
+    availability: new TimeIntervalCollection([
+        new TimeInterval({ start: start, stop: finalStop })
+    ]),
+    position: positionProperty,
+    orientation: new VelocityOrientationProperty(positionProperty),
+    box: {
+        dimensions: new Cartesian3(14.0, 2.6, 3.5),
+        material: Color.GOLD,
+        heightReference: HeightReference.CLAMP_TO_GROUND
+    }
+});
+```
+
+## 5 - Kamera auf die richtige Position setzen
+Damit wir die Fahrt der Zacke schön betrachten können, wird die Kamera über dem Marienplatz mit Blickrichtung Bergauf positioniert.
+```js
+viewer.camera.flyTo({
+    destination: Cartesian3.fromDegrees(9.168252, 48.764144, 400.0),
+    orientation: {
+        heading: CesiumMath.toRadians(170.0),
+        pitch: CesiumMath.toRadians(-10.0),
+        roll: 0.0,
+    },
 });
 ```
